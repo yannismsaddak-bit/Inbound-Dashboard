@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       abs: { amPlanned: 21, amActual: 17, pmPlanned: 0, pmActual: 9 },
       otif: { val: Math.round(v(results[6]) * 100), onTime: 88, inFull: 67 },
       gmp: { val: Math.round(v(results[7]) * 100) },
-      errorRate: { val: v(results[8]) },
+      errorRate: { val: parseFloat((v(results[8]) * 100).toFixed(4)) },
       hotPO: [], pendingUnload: [], unreceived: [],
       lastUpdated: new Date().toISOString(),
     })
