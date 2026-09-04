@@ -8,6 +8,7 @@ export default async function handler(req, res) {
 
   const SHEET_ID = process.env.SHEET_ID
   const KEY = process.env.GOOGLE_API_KEY
+  console.log('KEY:', KEY ? 'définie' : 'UNDEFINED')
 
   const get = async (range) => {
     const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(range) + '?key=' + KEY
