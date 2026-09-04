@@ -1,35 +1,26 @@
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from './auth/[...nextauth]'
-import { google } from 'googleapis'
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions)
   if (!session) return res.status(401).json({ error: 'Non autorisé' })
 
   try {
-    const auth = new google.auth.GoogleAuth({
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    })
-    const sheets = google.sheets({ version: 'v4', auth: new google.auth.OAuth2() })
     const SHEET_ID = process.env.SHEET_ID
+    const KEY = process.env.GOOGLE_API_KEY
 
     const get = async (range) => {
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?key=${process.env.GOOGLE_API_KEY}`
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?key=${KEY}`
       const r = await fetch(url)
       const data = await r.json()
+      if (data.error) throw new Error(data.error.message)
       return data.values || []
     }
 
     const [poExp, poRec, poRem, ratePlanned, rateActual, lti, otif, gmp, err] = await Promise.all([
-      get('Dashboard V2!B26'),
-      get('Dashboard V2!C26'),
-      get('Dashboard V2!D26'),
-      get('Data2!H1'),
-      get('Data2!C15'),
-      get('Dashboard V2!B39'),
-      get('Dashboard V2!K34'),
-      get('Dashboard V2!N32'),
-      get('Dashboard V2!R35'),
+      get('Dashboard V2!B26'), get('Dashboard V2!C26'), get('Dashboard V2!D26'),
+      get('Data2!H1'), get('Data2!C15'), get('Dashboard V2!B39'),
+      get('Dashboard V2!K34'), get('Dashboard V2!N32'), get('Dashboard V2!R35'),
     ])
 
     const v = (arr) => arr?.[0]?.[0] ?? 0
@@ -42,13 +33,11 @@ export default async function handler(req, res) {
       otif: { val: Math.round(v(otif) * 100), onTime: 88, inFull: 67 },
       gmp: { val: Math.round(v(gmp) * 100) },
       errorRate: { val: v(err) },
-      hotPO: [],
-      pendingUnload: [],
-      unreceived: [],
+      hotPO: [], pendingUnload: [], unreceived: [],
       lastUpdated: new Date().toISOString(),
     })
   } catch(e) {
     console.error(e)
-    res.status(500).json({ error: 'Erreur: ' + e.message })
+    res.status(500).json({ error: e.message })
   }
 }
