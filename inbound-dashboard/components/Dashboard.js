@@ -99,9 +99,9 @@ export default function Dashboard({ user }) {
   useEffect(() => { fetchData() }, [fetchData])
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t) }, [])
   useEffect(() => {
-    const t = setInterval(() => setRefreshIn(s => { if (s <= 1) { fetchData(); return 60 } return s - 1 }), 1000)
+    const t = setInterval(() => setRefreshIn(s => s <= 1 ? 60 : s - 1), 1000)
     return () => clearInterval(t)
-  }, [fetchData])
+  }, [])
 
   const hh = String(time.getHours()).padStart(2, '0')
   const mm = String(time.getMinutes()).padStart(2, '0')
