@@ -1,3 +1,4 @@
+// v2
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from './auth/[...nextauth]'
 
