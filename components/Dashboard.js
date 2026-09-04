@@ -1,54 +1,78 @@
 import { useState, useEffect, useCallback } from 'react'
 import { signOut } from 'next-auth/react'
 
-function pct(val, max) { return max > 0 ? Math.min(100, Math.round((val / max) * 100)) : 0 }
 function fmtNum(n) { return typeof n === 'number' ? n : parseFloat(n) || 0 }
-function absPct(planned, actual) {
-  if (planned <= 0) return '0,00%'
-  return (Math.abs(planned - actual) / planned * 100).toFixed(2).replace('.', ',') + '%'
+function fmtPct(n) { return (fmtNum(n) * 100).toFixed(1) + '%' }
+function pct(val, max) { return max > 0 ? Math.min(100, Math.round((val / max) * 100)) : 0 }
+
+const S = {
+  db: { background: '#f0f2f5', padding: 10, minHeight: '100vh', fontFamily: "'Segoe UI', sans-serif" },
+  hdr: { background: '#1a2e5a', borderRadius: 8, padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  hdrLeft: { display: 'flex', alignItems: 'center', gap: 12 },
+  logo: { background: '#5a9e2f', borderRadius: 6, padding: '4px 8px', color: '#fff', fontWeight: 700, fontSize: 12, lineHeight: 1.2 },
+  hdrTitle: { color: '#fff', fontSize: 16, fontWeight: 700, letterSpacing: '.04em' },
+  hdrMeta: { display: 'flex', gap: 10, alignItems: 'center' },
+  chip: { background: 'rgba(255,255,255,.13)', borderRadius: 5, padding: '3px 10px', fontSize: 11, color: '#fff', fontWeight: 500 },
+  chipGreen: { background: '#5a9e2f', borderRadius: 5, padding: '3px 10px', fontSize: 11, color: '#fff', fontWeight: 500 },
+  gridTop: { display: 'grid', gridTemplateColumns: '160px 1fr 1fr 1fr 200px', gap: 8, marginBottom: 8 },
+  gridBot: { display: 'grid', gridTemplateColumns: '160px 1fr 1fr 1fr 200px', gap: 8, marginBottom: 8 },
+  card: { background: '#fff', borderRadius: 8, padding: '10px 12px', border: '1px solid #e0e4ea' },
+  cardTitle: { fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1a2e5a', marginBottom: 8, borderBottom: '2px solid #1a2e5a', paddingBottom: 4 },
+  abRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#555', padding: '2px 0', borderBottom: '0.5px solid #f0f0f0' },
+  muted: { fontSize: 10, color: '#888' },
+  bigNum: { fontSize: 28, fontWeight: 700, color: '#1a2e5a', lineHeight: 1 },
+  sectionLbl: { fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888', margin: '5px 0 2px' },
+  progressBg: { background: '#e9ecef', borderRadius: 20, height: 5, width: '100%', marginTop: 4 },
+  comment: { background: '#1a2e5a', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 },
+}
+
+function pill(text, type) {
+  const colors = {
+    green: { background: '#d4edda', color: '#1a6630' },
+    red: { background: '#f8d7da', color: '#8b1a1a' },
+    amber: { background: '#fff3cd', color: '#7d5a00' },
+    gray: { background: '#e9ecef', color: '#495057' },
+  }
+  const c = colors[type] || colors.gray
+  return <span style={{ ...c, borderRadius: 4, padding: '1px 7px', fontSize: 11, fontWeight: 700, display: 'inline-block' }}>{text}</span>
+}
+
+function trendChip(text, type) {
+  const colors = {
+    up: { background: '#d4edda', color: '#1a6630' },
+    down: { background: '#f8d7da', color: '#8b1a1a' },
+    flat: { background: '#e9ecef', color: '#495057' },
+  }
+  const c = colors[type] || colors.flat
+  return <span style={{ ...c, display: 'inline-flex', alignItems: 'center', gap: 3, borderRadius: 20, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>{text}</span>
 }
 
 function Donut({ received, expected }) {
   const p = pct(received, expected)
-  const r = 35, circ = 2 * Math.PI * r
+  const r = 40, circ = 2 * Math.PI * r
   const fill = circ * (p / 100)
-  const color = p >= 100 ? '#5cb85c' : p >= 80 ? '#f0a500' : '#d9534f'
+  const color = p >= 100 ? '#5a9e2f' : p >= 80 ? '#f0ad4e' : '#dc3545'
   return (
-    <svg viewBox="0 0 90 90" width="90" height="90">
-      <circle cx="45" cy="45" r={r} fill="none" stroke="#e0e0e0" strokeWidth="12" />
-      <circle cx="45" cy="45" r={r} fill="none" stroke={color} strokeWidth="12"
+    <svg width="100" height="100" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r={r} fill="none" stroke="#e9ecef" strokeWidth="14" />
+      <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="14"
         strokeDasharray={`${fill.toFixed(1)} ${circ}`}
-        strokeLinecap="round" transform="rotate(-90 45 45)" />
-      <text x="45" y="41" textAnchor="middle" fontSize="12" fontWeight="700" fill="#1a2e4a">{p}%</text>
-      <text x="45" y="52" textAnchor="middle" fontSize="8" fill="#777">Received</text>
-      <text x="45" y="61" textAnchor="middle" fontSize="8" fill="#777">{received}/{expected}</text>
+        strokeDashoffset={circ * 0.25}
+        strokeLinecap="round"
+        transform="rotate(-90 50 50)" />
+      <text x="50" y="46" textAnchor="middle" fontSize="16" fontWeight="700" fill="#1a2e5a">{p}%</text>
+      <text x="50" y="60" textAnchor="middle" fontSize="9" fill="#888">{received}/{expected}</text>
     </svg>
   )
 }
 
-function ProgressBar({ value, target }) {
+function ProgressBar({ value, target, color }) {
   const w = Math.min(100, Math.round((value / (target || 100)) * 100))
-  const c = value >= target ? '#5cb85c' : '#f0a500'
   return (
-    <div style={{ position: 'relative', background: '#ddd', height: 12, borderRadius: 2, margin: '4px 0' }}>
-      <div style={{ width: `${w}%`, height: '100%', background: c, borderRadius: 2 }} />
-      <div style={{ position: 'absolute', top: -3, left: `${Math.min(98, target)}%`, height: 18, width: 2, background: '#333' }} />
+    <div style={S.progressBg}>
+      <div style={{ width: `${w}%`, height: 5, borderRadius: 20, background: color || '#1a2e5a' }} />
     </div>
   )
-}
-
-function Card({ title, children }) {
-  return (
-    <div style={{ background: 'white', border: '1px solid #bbb', borderRadius: 2 }}>
-      <div style={{ background: '#1a2e4a', color: '#7ec8e3', fontSize: 11, fontWeight: 700, fontStyle: 'italic', textAlign: 'center', padding: '5px 8px', letterSpacing: 0.5 }}>{title}</div>
-      <div style={{ padding: 8 }}>{children}</div>
-    </div>
-  )
-}
-
-function Badge({ children, color }) {
-  const colors = { green: '#5cb85c', red: '#d9534f', orange: '#f0a500' }
-  return <span style={{ background: colors[color] || colors.green, color: 'white', padding: '2px 8px', fontSize: 11, fontWeight: 700, borderRadius: 2 }}>{children}</span>
 }
 
 export default function Dashboard({ user }) {
@@ -81,147 +105,248 @@ export default function Dashboard({ user }) {
 
   const hh = String(time.getHours()).padStart(2, '0')
   const mm = String(time.getMinutes()).padStart(2, '0')
+  const dlc = new Date(time.getTime() + 6 * 24 * 3600000)
+  const dlcStr = `${String(dlc.getDate()).padStart(2, '0')}/${String(dlc.getMonth() + 1).padStart(2, '0')}/${dlc.getFullYear()}`
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial' }}><div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, color: '#1a2e4a', fontWeight: 700 }}>Connexion à Google Sheets…</div></div></div>
-  if (error) return <div style={{ minHeight: '100vh', background: '#e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial' }}><div style={{ background: 'white', borderRadius: 6, padding: 32, textAlign: 'center' }}><div style={{ color: '#d9534f', fontWeight: 700, marginBottom: 12 }}>{error}</div><button onClick={fetchData} style={{ background: '#1a2e4a', color: 'white', border: 'none', borderRadius: 4, padding: '8px 20px', cursor: 'pointer' }}>Réessayer</button></div></div>
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: '#f0f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', sans-serif" }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 14, color: '#1a2e5a', fontWeight: 700 }}>Connexion à Google Sheets…</div>
+      </div>
+    </div>
+  )
 
-  const { po = {expected:0,received:0,remaining:0}, rate = {planned:0,actual:0}, lti = {year:0,days:0,lastDate:''}, abs = {amPlanned:0,amActual:0,pmPlanned:0,pmActual:0}, otif = {val:0,onTime:0,inFull:0}, gmp = {val:0}, errorRate = {val:0}, hotPO = [], pendingUnload = [], unreceived = [] } = data || {}
+  if (error) return (
+    <div style={{ minHeight: '100vh', background: '#f0f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, textAlign: 'center' }}>
+        <div style={{ color: '#dc3545', fontWeight: 700, marginBottom: 12 }}>{error}</div>
+        <button onClick={fetchData} style={{ background: '#1a2e5a', color: 'white', border: 'none', borderRadius: 6, padding: '8px 20px', cursor: 'pointer' }}>Réessayer</button>
+      </div>
+    </div>
+  )
+
+  const { po = {}, rate = {}, lti = {}, abs = {}, otif = {}, gmp = {}, errorRate = {}, hotPO = [], pendingUnload = [], unreceived = [] } = data || {}
+
+  const poExp = fmtNum(po.expected)
+  const poRec = fmtNum(po.received)
+  const poRem = fmtNum(po.remaining)
+  const ratePlanned = fmtNum(rate.planned)
+  const rateActual = fmtNum(rate.actual)
+  const ecart = rateActual - ratePlanned
+  const otifVal = fmtNum(otif.val)
+  const gmpVal = fmtNum(gmp.val)
+  const errVal = parseFloat(String(errorRate.val).replace(',', '.')) || 0
+  const ltiDays = fmtNum(lti.days)
+
+  const amPlanned = fmtNum(abs.amPlanned)
+  const amActual = fmtNum(abs.amActual)
+  const pmPlanned = fmtNum(abs.pmPlanned)
+  const pmActual = fmtNum(abs.pmActual)
+  const amAbsPct = amPlanned > 0 ? ((Math.abs(amPlanned - amActual) / amPlanned) * 100).toFixed(2) : '0.00'
+  const pmAbsPct = pmPlanned > 0 ? ((Math.abs(pmPlanned - pmActual) / pmPlanned) * 100).toFixed(2) : '0.00'
 
   return (
-    <div style={{ background: '#e8e8e8', minHeight: '100vh', padding: 8, fontFamily: 'Arial, sans-serif' }}>
-      <div style={{ background: '#1a2e4a', display: 'flex', alignItems: 'center', gap: 16, padding: '6px 12px', marginBottom: 6, borderRadius: 2 }}>
-        <div style={{ background: 'white', padding: '4px 8px', borderRadius: 2, fontWeight: 900, fontSize: 12, lineHeight: 1.1 }}>HELLO<span style={{ color: '#5cb85c' }}>FRESH</span></div>
-        <div style={{ color: '#7ec8e3', fontSize: 16, fontWeight: 700, fontStyle: 'italic', flex: 1, letterSpacing: 1 }}>DASHBOARD INBOUND</div>
-        <div style={{ fontSize: 11, color: '#aaa', display: 'flex', gap: 16, alignItems: 'center' }}>
-          <span>⟳ {refreshIn}s</span>
-          <button onClick={fetchData} style={{ background: 'none', border: '1px solid #aaa', color: '#aaa', borderRadius: 3, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}>Actualiser</button>
-          <span>{user?.email}</span>
-          <button onClick={() => signOut({ callbackUrl: '/login' })} style={{ background: 'none', border: '1px solid #555', color: '#aaa', borderRadius: 3, padding: '2px 8px', fontSize: 10, cursor: 'pointer' }}>Déconnexion</button>
+    <div style={S.db}>
+      {/* Header */}
+      <div style={S.hdr}>
+        <div style={S.hdrLeft}>
+          <div style={S.logo}>HELLO<br />FRESH</div>
+          <div style={S.hdrTitle}>DASHBOARD INBOUND</div>
+        </div>
+        <div style={S.hdrMeta}>
+          <span style={S.chip}>📅 DLC PHF : {dlcStr}</span>
+          <span style={S.chipGreen}>⏱ {hh}:{mm}</span>
+          <span style={S.chip}>🎯 Complétion : {pct(poRec, poExp)}%</span>
+          <span style={S.chip}>🔒 LTI : {ltiDays} jours</span>
+          <span style={S.chip}>⟳ {refreshIn}s</span>
+          <button onClick={fetchData} style={{ background: 'rgba(255,255,255,.13)', border: 'none', color: '#fff', borderRadius: 5, padding: '3px 10px', fontSize: 11, cursor: 'pointer' }}>Actualiser</button>
+          <button onClick={() => signOut({ callbackUrl: '/login' })} style={{ background: 'none', border: '1px solid rgba(255,255,255,.3)', color: '#fff', borderRadius: 5, padding: '3px 10px', fontSize: 11, cursor: 'pointer' }}>Déconnexion</button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-        <div style={{ background: 'white', border: '1px solid #bbb', padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>Time : <span style={{ color: '#1a2e4a' }}>{hh}:{mm}</span></div>
-        <div style={{ background: 'white', border: '1px solid #bbb', padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>Sheet ID : <span style={{ color: '#5cb85c' }}>✅ Connectée</span></div>
-      </div>
+      {/* Row 1 */}
+      <div style={S.gridTop}>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 6 }}>
-        <Card title="PO INBOUND">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <Donut received={fmtNum(po.received)} expected={fmtNum(po.expected)} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', textAlign: 'center', fontSize: 10, borderTop: '1px solid #eee', paddingTop: 4, width: '100%' }}>
-              <div><div style={{ color: '#777' }}>Expected</div><div style={{ fontWeight: 700, color: '#1a2e4a' }}>{po.expected}</div></div>
-              <div><div style={{ color: '#777' }}>Received</div><div style={{ fontWeight: 700, color: '#1a2e4a' }}>{po.received}</div></div>
-              <div><div style={{ color: '#777' }}>Remaining</div><div style={{ fontWeight: 700, color: po.remaining > 0 ? '#d9534f' : '#5cb85c' }}>{po.remaining}</div></div>
-            </div>
+        {/* PO Inbound */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Nbre de réception</div>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 6px' }}>
+            <Donut received={poRec} expected={poExp} />
           </div>
-        </Card>
+          <div style={S.abRow}><span style={S.muted}>Attendus</span><b>{poExp}</b></div>
+          <div style={S.abRow}><span style={S.muted}>Reçus</span>{pill(poRec, poRec >= poExp ? 'green' : 'amber')}</div>
+          <div style={{ ...S.abRow, borderBottom: 'none' }}><span style={S.muted}>Restant</span>{pill(poRem, poRem === 0 ? 'green' : 'red')}</div>
+        </div>
 
-        <Card title="HOT PO">
-          <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse' }}>
-            <thead><tr>
-              <th style={{ textAlign: 'left', padding: '2px 4px', borderBottom: '1px solid #ddd' }}>Supplier</th>
-              <th style={{ textAlign: 'left', padding: '2px 4px', borderBottom: '1px solid #ddd' }}>PO</th>
-              <th style={{ textAlign: 'left', padding: '2px 4px', borderBottom: '1px solid #ddd' }}>Status</th>
-            </tr></thead>
+        {/* Hot PO */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Prio PO</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+            <thead>
+              <tr>
+                <th style={{ color: '#888', fontWeight: 600, textAlign: 'left', padding: '2px 3px', borderBottom: '1px solid #eee' }}>Fournisseur</th>
+                <th style={{ color: '#888', fontWeight: 600, textAlign: 'left', padding: '2px 3px', borderBottom: '1px solid #eee' }}>PO</th>
+                <th style={{ color: '#888', fontWeight: 600, textAlign: 'left', padding: '2px 3px', borderBottom: '1px solid #eee' }}>Statut</th>
+              </tr>
+            </thead>
             <tbody>
               {hotPO.length === 0
-                ? <tr><td colSpan={3} style={{ color: '#aaa', fontStyle: 'italic', padding: 4 }}>Pas de PRIO</td></tr>
+                ? <tr><td colSpan={3} style={{ fontSize: 10, color: '#bbb', textAlign: 'center', padding: '8px 0', fontStyle: 'italic' }}>Pas de PRIO</td></tr>
                 : hotPO.map((row, i) => (
                   <tr key={i}>
-                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #f0f0f0' }}>{row.supplier}</td>
-                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #f0f0f0' }}>{row.po}</td>
-                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #f0f0f0' }}>
-                      <span style={{ background: row.status === 'OK' ? '#5cb85c' : '#d9534f', color: 'white', padding: '1px 5px', fontSize: 9, borderRadius: 2 }}>{row.status}</span>
-                    </td>
+                    <td style={{ padding: '2px 3px', color: '#555' }}>{row.supplier}</td>
+                    <td style={{ padding: '2px 3px', color: '#555' }}>{row.po}</td>
+                    <td style={{ padding: '2px 3px' }}>{pill(row.status, row.status === 'OK' ? 'green' : 'red')}</td>
                   </tr>
-                ))}
+                ))
+              }
             </tbody>
           </table>
-        </Card>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 6, borderTop: '1px solid #eee' }}>
+            <span style={S.muted}>Total PRIO actifs</span>
+            {pill(hotPO.length, hotPO.length === 0 ? 'green' : 'red')}
+          </div>
+        </div>
 
-        <Card title="PENDING UNLOAD">
+        {/* Pending Unload */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Reste à décharger</div>
           {pendingUnload.length === 0
-            ? <div style={{ color: '#aaa', fontSize: 10, fontStyle: 'italic' }}>Aucun en attente</div>
-            : pendingUnload.map((item, i) => <div key={i} style={{ background: '#e0ecf8', marginBottom: 2, padding: '2px 6px', fontSize: 10, color: '#1a2e4a', fontWeight: 600 }}>{item}</div>)
+            ? <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center', padding: '8px 0', fontStyle: 'italic' }}>Aucun en attente</div>
+            : pendingUnload.map((item, i) => (
+              <div key={i} style={{ background: '#f0f5ff', borderRadius: 4, padding: '3px 8px', marginBottom: 3, fontSize: 10, color: '#1a2e5a', fontWeight: 600 }}>{item}</div>
+            ))
           }
-        </Card>
+          <div style={{ ...S.abRow, borderBottom: 'none', marginTop: 6 }}>
+            <span style={S.muted}>Total à décharger</span>
+            {pill(pendingUnload.length, pendingUnload.length === 0 ? 'green' : 'amber')}
+          </div>
+        </div>
 
-        <Card title="UNRECEIVED PO">
+        {/* Unreceived PO */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Non réceptionné</div>
           {unreceived.length === 0
-            ? <div style={{ color: '#aaa', fontSize: 10, fontStyle: 'italic' }}>Aucun</div>
-            : unreceived.map((item, i) => <div key={i} style={{ background: '#fde8e8', marginBottom: 2, padding: '2px 6px', fontSize: 10, color: '#d9534f', fontWeight: 600 }}>{item}</div>)
+            ? <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center', padding: '8px 0', fontStyle: 'italic' }}>Aucun PO en attente</div>
+            : unreceived.map((item, i) => (
+              <div key={i} style={{ background: '#f8d7da', borderRadius: 4, padding: '3px 8px', marginBottom: 3, fontSize: 10, color: '#8b1a1a', fontWeight: 600 }}>{item}</div>
+            ))
           }
-        </Card>
+          {unreceived.length > 0 && (
+            <div style={{ ...S.abRow, borderBottom: 'none', marginTop: 6 }}>
+              <span style={S.muted}>Total non reçus</span>
+              {pill(unreceived.length, 'red')}
+            </div>
+          )}
+        </div>
 
-        <Card title="INBOUND RATE">
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 12, height: 80 }}>
-            {[{ label: 'Planned', val: fmtNum(rate.planned), color: '#7ec8e3' }, { label: 'Actual', val: fmtNum(rate.actual), color: '#1a2e4a' }].map(({ label, val, color }) => {
-              const maxVal = Math.max(fmtNum(rate.planned), fmtNum(rate.actual))
-              const h = Math.round((val / (maxVal || 1)) * 64)
-              return <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <div style={{ width: 32, height: h, background: color, borderRadius: '2px 2px 0 0' }} />
-                <div style={{ fontSize: 11, fontWeight: 700 }}>{val}</div>
-                <div style={{ fontSize: 9, color: '#777' }}>{label}</div>
-              </div>
+        {/* Inbound Rate */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Rythme réception</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 10, height: 80, marginBottom: 6 }}>
+            {[{ label: 'Attendu', val: ratePlanned, color: '#a8c4e0' }, { label: 'Réel', val: rateActual, color: '#1a2e5a' }].map(({ label, val, color }) => {
+              const maxVal = Math.max(ratePlanned, rateActual)
+              const h = Math.round((val / (maxVal || 1)) * 70)
+              return (
+                <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <div style={{ width: 36, height: h, background: color, borderRadius: '4px 4px 0 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: color === '#a8c4e0' ? '#1a2e5a' : '#fff' }}>{Math.round(val)}</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: '#888' }}>{label}</span>
+                </div>
+              )
             })}
           </div>
-          <div style={{ textAlign: 'center', marginTop: 4 }}>
-            <span style={{ background: fmtNum(rate.actual) >= fmtNum(rate.planned) ? '#5cb85c' : '#d9534f', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 2 }}>
-              Écart : {fmtNum(rate.actual) - fmtNum(rate.planned) >= 0 ? '+' : ''}{fmtNum(rate.actual) - fmtNum(rate.planned)}
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            {trendChip(`${ecart >= 0 ? '▲' : '▼'} Écart: ${ecart >= 0 ? '+' : ''}${Math.round(ecart)}`, ecart >= 0 ? 'up' : 'down')}
           </div>
-        </Card>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-        <Card title="LTI">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: 6, marginBottom: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600 }}>LTI (This Year) :</span>
-            <Badge color={fmtNum(lti.year) === 0 ? 'green' : 'red'}>{lti.year}</Badge>
+      {/* Row 2 */}
+      <div style={S.gridBot}>
+
+        {/* LTI */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>LTI — Sécurité</div>
+          <div style={{ textAlign: 'center', background: '#d4edda', borderRadius: 6, padding: 8, marginBottom: 6 }}>
+            <div style={{ ...S.bigNum, color: '#1a6630' }}>{ltiDays}</div>
+            <div style={{ fontSize: 9, color: '#1a6630', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>jours sans LTI</div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>DAYS WITHOUT LTI :</div>
-          <div style={{ fontSize: 30, fontWeight: 700, color: '#5cb85c', textAlign: 'center' }}>{lti.days}</div>
-          <div style={{ fontSize: 10, color: '#777', marginTop: 6 }}>Last LTI : {lti.lastDate}</div>
-        </Card>
+          <div style={S.abRow}><span style={S.muted}>LTI cette année</span>{pill(fmtNum(lti.year), fmtNum(lti.year) === 0 ? 'green' : 'red')}</div>
+          <div style={{ ...S.abRow, borderBottom: 'none' }}><span style={S.muted}>Dernier LTI</span><span style={{ fontSize: 10, color: '#888' }}>{lti.lastDate}</span></div>
+        </div>
 
-        <Card title="ABSENTEEISM">
-          {[{ label: 'AM', planned: fmtNum(abs.amPlanned), actual: fmtNum(abs.amActual) }, { label: 'PM', planned: fmtNum(abs.pmPlanned), actual: fmtNum(abs.pmActual) }].map(({ label, planned, actual }) => {
-            const p = absPct(planned, actual)
-            const pNum = parseFloat(p)
-            return <div key={label} style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#1a2e4a', marginBottom: 2 }}>{label}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}><span style={{ color: '#777' }}>Planned</span><span>{planned}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}><span style={{ color: '#777' }}>Actual</span><span>{actual}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginTop: 2 }}><span style={{ color: '#777' }}>Abs %</span><Badge color={pNum > 10 ? 'red' : pNum > 5 ? 'orange' : 'green'}>{p}</Badge></div>
-            </div>
-          })}
-        </Card>
+        {/* Absenteeism */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Taux d'absentéisme</div>
+          <div style={S.sectionLbl}>AM</div>
+          <div style={S.abRow}><span style={S.muted}>Prévu</span><b>{amPlanned}</b></div>
+          <div style={S.abRow}><span style={S.muted}>Réel</span><b>{amActual}</b></div>
+          <div style={S.abRow}><span style={S.muted}>Absent</span>{pill(`${amAbsPct}%`, parseFloat(amAbsPct) > 10 ? 'red' : parseFloat(amAbsPct) > 5 ? 'amber' : 'green')}</div>
+          <div style={{ height: 6 }} />
+          <div style={S.sectionLbl}>PM</div>
+          <div style={S.abRow}><span style={S.muted}>Prévu</span><b>{pmPlanned}</b></div>
+          <div style={S.abRow}><span style={S.muted}>Réel</span><b>{pmActual}</b></div>
+          <div style={{ ...S.abRow, borderBottom: 'none' }}><span style={S.muted}>Absent</span>{pill(`${pmAbsPct}%`, parseFloat(pmAbsPct) > 10 ? 'red' : parseFloat(pmAbsPct) > 5 ? 'amber' : 'green')}</div>
+        </div>
 
-        <Card title="OTIF INBOUND">
-          <div style={{ fontSize: 10, color: '#777', textAlign: 'center' }}>Current Day</div>
-          <div style={{ fontSize: 30, fontWeight: 700, color: fmtNum(otif.val) >= 90 ? '#5cb85c' : '#f0a500', textAlign: 'center', fontStyle: 'italic' }}>{otif.val}%</div>
-          {fmtNum(otif.val) < 90 && <div style={{ color: '#d9534f', fontSize: 9, textAlign: 'center' }}>⚠ Below target &lt; 90%</div>}
-          <ProgressBar value={fmtNum(otif.val)} target={90} />
-          <div style={{ fontSize: 8, color: '#777', display: 'flex', justifyContent: 'space-between' }}><span>0%</span><span>90% Target</span></div>
-          <div style={{ marginTop: 8, fontSize: 10, color: '#555' }}>
-            <div>On time <strong>{otif.onTime}%</strong></div>
-            <div>In full <strong>{otif.inFull}%</strong></div>
+        {/* OTIF */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>OTIF Inbound</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <div style={{ ...S.bigNum, color: otifVal >= 90 ? '#1a6630' : '#7d5a00' }}>{otifVal}%</div>
+            {trendChip(otifVal >= 90 ? '✓ Objectif' : '⚠ Sous cible', otifVal >= 90 ? 'up' : 'down')}
           </div>
-        </Card>
+          <div style={{ fontSize: 10, color: '#888', marginBottom: 6 }}>Jour en cours</div>
+          <ProgressBar value={otifVal} target={90} color={otifVal >= 90 ? '#5a9e2f' : '#f0ad4e'} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, marginTop: 2 }}>
+            <span style={S.muted}>0%</span>
+            <span style={{ color: '#5a9e2f', fontWeight: 600 }}>90% cible</span>
+          </div>
+          <div style={{ ...S.abRow, marginTop: 6 }}><span style={S.muted}>On time</span><b>{fmtNum(otif.onTime)}%</b></div>
+          <div style={{ ...S.abRow, borderBottom: 'none' }}><span style={S.muted}>In full</span><b>{fmtNum(otif.inFull)}%</b></div>
+        </div>
 
-        <Card title="GMP">
-          <div style={{ fontSize: 30, fontWeight: 700, color: fmtNum(gmp.val) >= 95 ? '#5cb85c' : '#f0a500', textAlign: 'center', fontStyle: 'italic' }}>{gmp.val}%</div>
-          {fmtNum(gmp.val) < 95 && <div style={{ color: '#d9534f', fontSize: 9, textAlign: 'center' }}>⚠ Below target &lt; 95%</div>}
-          <ProgressBar value={fmtNum(gmp.val)} target={95} />
-          <div style={{ fontSize: 8, color: '#777', display: 'flex', justifyContent: 'space-between' }}><span>0%</span><span>95% Target</span></div>
-        </Card>
+        {/* GMP */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Audit GMP Inbound</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <div style={{ ...S.bigNum, color: gmpVal >= 95 ? '#1a6630' : '#7d5a00' }}>{gmpVal}%</div>
+            {trendChip(gmpVal >= 95 ? '✓ Objectif' : '⚠ Sous cible', gmpVal >= 95 ? 'up' : 'flat')}
+          </div>
+          <div style={{ fontSize: 10, color: gmpVal < 95 ? '#8b1a1a' : '#1a6630', marginBottom: 6, fontWeight: 500 }}>
+            {gmpVal < 95 ? '⚠ Sous la cible (95%)' : '✓ Objectif atteint'}
+          </div>
+          <ProgressBar value={gmpVal} target={95} color={gmpVal >= 95 ? '#5a9e2f' : '#f0ad4e'} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, marginTop: 2 }}>
+            <span style={S.muted}>0%</span>
+            <span style={{ color: gmpVal >= 95 ? '#5a9e2f' : '#f0ad4e', fontWeight: 600 }}>{gmpVal}% actuel</span>
+            <span style={{ color: '#5a9e2f', fontWeight: 600 }}>95% cible</span>
+          </div>
+        </div>
 
-        <Card title="ERROR RATE INB">
-          <div style={{ fontSize: 10, color: '#777', textAlign: 'center' }}>Semaine en cours</div>
-          <div style={{ fontSize: 26, fontWeight: 700, fontStyle: 'italic', textAlign: 'center', color: fmtNum(String(errorRate.val).replace(',', '.')) < 1 ? '#5cb85c' : '#d9534f' }}>{errorRate.val}%</div>
-          <div style={{ fontSize: 9, color: '#5cb85c', textAlign: 'center' }}>{fmtNum(String(errorRate.val).replace(',', '.')) < 1 ? '✅ Target reached < 1%' : '⚠ Above target'}</div>
-        </Card>
+        {/* Error Rate */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Error rate inbound</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <div style={{ ...S.bigNum, color: errVal < 1 ? '#1a6630' : '#8b1a1a' }}>{errVal.toFixed(2).replace('.', ',')}%</div>
+            {trendChip(errVal < 1 ? '→ stable' : '▲ alerte', errVal < 1 ? 'flat' : 'down')}
+          </div>
+          <div style={{ fontSize: 10, color: '#888', marginBottom: 6 }}>Semaine en cours</div>
+          <ProgressBar value={errVal} target={1} color={errVal < 1 ? '#5a9e2f' : '#dc3545'} />
+          <div style={{ fontSize: 9, color: '#5a9e2f', marginTop: 2, fontWeight: 600 }}>
+            {errVal < 1 ? '✓ Objectif atteint (cible < 1%)' : '⚠ Au-dessus de la cible'}
+          </div>
+        </div>
+      </div>
+
+      {/* Comment bar */}
+      <div style={S.comment}>
+        <span style={{ fontSize: 16 }}>💬</span>
+        <span style={{ color: '#fff', fontSize: 12, fontStyle: 'italic', opacity: .85 }}>
+          Commentaire opérationnel — {user?.email}
+        </span>
       </div>
     </div>
   )
