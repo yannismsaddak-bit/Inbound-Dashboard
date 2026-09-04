@@ -6,7 +6,7 @@ function fmtPct(n) { return (fmtNum(n) * 100).toFixed(1) + '%' }
 function pct(val, max) { return max > 0 ? Math.min(100, Math.round((val / max) * 100)) : 0 }
 
 const S = {
-  db: { background: '#f0f2f5', padding: 10, minHeight: '100vh', fontFamily: "'Segoe UI', sans-serif" },
+  db: { background: '#f0f2f5', padding: 10, minHeight: '100vh', fontFamily: "'Montserrat', sans-serif" },
   hdr: { background: '#1a2e5a', borderRadius: 8, padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   hdrLeft: { display: 'flex', alignItems: 'center', gap: 12 },
   logo: { background: '#5a9e2f', borderRadius: 6, padding: '4px 8px', color: '#fff', fontWeight: 700, fontSize: 12, lineHeight: 1.2 },
@@ -109,7 +109,7 @@ export default function Dashboard({ user }) {
   const dlcStr = `${String(dlc.getDate()).padStart(2, '0')}/${String(dlc.getMonth() + 1).padStart(2, '0')}/${dlc.getFullYear()}`
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#f0f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#f0f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Montserrat', sans-serif" }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 14, color: '#1a2e5a', fontWeight: 700 }}>Connexion à Google Sheets…</div>
       </div>
@@ -330,7 +330,7 @@ export default function Dashboard({ user }) {
         <div style={S.card}>
           <div style={S.cardTitle}>Error rate inbound</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-            <div style={{ ...S.bigNum, color: errVal < 1 ? '#1a6630' : '#8b1a1a' }}>{errVal.toFixed(2).replace('.', ',')}%</div>
+            <div style={{ ...S.bigNum, color: errVal < 1 ? '#1a6630' : '#8b1a1a' }}>{(errVal * 100).toFixed(2).replace('.', ',')}%</div>
             {trendChip(errVal < 1 ? '→ stable' : '▲ alerte', errVal < 1 ? 'flat' : 'down')}
           </div>
           <div style={{ fontSize: 10, color: '#888', marginBottom: 6 }}>Semaine en cours</div>
